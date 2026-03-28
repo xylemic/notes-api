@@ -6,9 +6,22 @@ const getNotes = async (req, res) => {
     category : req.query.category
   }
 
-  const notes = await noteService.getNotes(req.user.id, filters)
+  const page = parseInt(req.query.page) || 1
+  const limit = parseInt(req.query.limit) || 10
 
-  res.json(notes)
+  const result = await noteService.getNotes(
+    req.user.id,
+    filters,
+    page,
+    limit
+  )
+
+  res.json({
+    data : result.data,
+    page,
+    limit,
+    total : result.total
+  })
 }
 
 const getNote = async (req, res) => {

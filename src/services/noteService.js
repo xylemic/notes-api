@@ -1,8 +1,9 @@
 const pool = require('../config/db')
 
-const getNotes = async (userId, filters) => {
-  let query = `
-    SELECT notes.*, categories.name AS category_name
+const getNotes = async (userId, filters, page, limit) => {
+  const offset = (page - 1) * limit
+
+  let baseQuery = `
     FROM notes
     LEFT JOIN categories
       ON notes.category_id = categories.id
@@ -24,11 +25,31 @@ const getNotes = async (userId, filters) => {
     values.push(filters.category)
   }
 
-  query += ` ORDER BY notes.created_at DESC`
+  // total count query
+  const countResult = await pool.query(
+    `SELECT COUNT(*) ${baseQuery}`,
+    values
+  )
 
-  const result = await pool.query(query, values)
+  const total = Number(countResult.rows[0].count)
 
-  return result.rows
+  // data query
+  values.push(limit)
+  values.push(offset)
+
+  const dataQuery = `
+    SELECT notes.*, categories.name AS category_name
+    ${baseQuery}
+    ORDER BY notes.created_at DESC
+    LIMIT $${index++} OFFSET $${index}
+  `
+
+  const dataResult = await pool.query(dataQuery, values)
+
+  return {
+    data : dataResult.rows,
+    total
+  }
 }
 
 const getNoteById = async (id, userId) => {
