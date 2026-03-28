@@ -1,14 +1,32 @@
 const pool = require('../config/db')
 
-const getNotes = async (userId) => {
-  const result = await pool.query(
-    `SELECT *
-     FROM notes
-     WHERE user_id = $1
-     ORDER BY created_at DESC
-    `,
-    [userId]
-  )
+const getNotes = async (userId, filters) => {
+  let query = `
+    SELECT notes.*, categories.name AS category_name
+    FROM notes
+    LEFT JOIN categories
+      ON notes.category_id = categories.id
+    WHERE notes.user_id = $1
+  `
+
+  const values = [userId]
+  let index = 2
+
+  // search filter
+  if (filters.search) {
+    query += ` AND notes.title ILIKE $${index++}`
+    values.push(`%${filters.search}`)
+  }
+
+  // category filter
+  if (filters.search) {
+    query += ` AND categories.name = $${index++}`
+    values.push(filters.category)
+  }
+
+  query += ` ORDER BY notes.created_at DESC`
+
+  const result = await pool.query(query, values)
 
   return result.rows
 }

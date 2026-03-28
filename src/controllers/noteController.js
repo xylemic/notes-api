@@ -1,7 +1,13 @@
 const noteService = require('../services/noteService')
 
 const getNotes = async (req, res) => {
-  const notes = await noteService.getNotes(req.user.id)
+  const filters = {
+    search : req.query.search,
+    category : req.query.category
+  }
+
+  const notes = await noteService.getNotes(req.user.id, filters)
+
   res.json(notes)
 }
 
