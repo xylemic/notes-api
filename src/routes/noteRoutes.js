@@ -11,13 +11,15 @@ const {
   deleteNote
 } = require('../controllers/noteController')
 
+const validateNote = require('../middleware/validateNote')
+
 
 router.use(authenticate)
 
 router.get('/', getNotes)
 router.get('/:id', getNote)
-router.post('/', createNote)
-router.patch('/:id', updateNote)
+router.post('/', validateNote, createNote)
+router.patch('/:id', validateNote, updateNote)
 router.delete('/:id', deleteNote)
 
 module.exports = router

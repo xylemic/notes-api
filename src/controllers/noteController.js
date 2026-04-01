@@ -1,9 +1,12 @@
 const noteService = require('../services/noteService')
+const asyncHandler = require('../middleware/asyncHandler')
+const { success } = require('../utils/response')
 
-const getNotes = async (req, res) => {
+
+const getNotes = asyncHandler(async (req, res) => {
   const filters = {
-    search : req.query.search,
-    category : req.query.category
+    search: req.query.search,
+    category: req.query.category
   }
 
   const page = parseInt(req.query.page) || 1
@@ -16,34 +19,37 @@ const getNotes = async (req, res) => {
     limit
   )
 
-  res.json({
-    data : result.data,
+  success(res, {
+    data: result.data,
     page,
     limit,
-    total : result.total
+    total: result.total
   })
-}
+})
 
-const getNote = async (req, res) => {
+const getNote = asyncHandler(async (req, res) => {
   const note = await noteService.getNoteById(
     Number(req.params.id),
     req.user.id
   )
 
   if (!note) {
-    return res.status(404).json({ error : 'note not found '})
+    const err = new Error('note not found')
+    err.status = 404
+    throw err
   }
 
-  res.json(note)
-}
+  success(res, note)
+})
 
 
-const createNote = async (req, res) => {
+const createNote = asyncHandler(async (req, res) => {
   const note = await noteService.createNote(req.body, req.user.id)
-  res.status(201).json(note)
-}
+  
+  success(res, note, 201)
+})
 
-const updateNote = async (req, res) => {
+const updateNote = asyncHandler(async (req, res) => {
   const note = await noteService.updateNote(
     Number(req.params.id),
     req.body,
@@ -51,25 +57,29 @@ const updateNote = async (req, res) => {
   )
 
   if (!note) {
-    return res.status(404).json({ error : 'note not found' })
+    const err = new Error('note not found')
+    err.status = 404
+    throw err
   }
 
-  res.json(note)
-}
+  success(res, note)
+})
 
 
-const deleteNote = async (req, res) => {
+const deleteNote = asyncHandler(async (req, res) => {
   const deleted = await noteService.deleteNote(
     Number(req.params.id),
     req.user.id
   )
 
   if (!deleted) {
-    return res.status(404).json({ error : 'note not found' })
+    const err = new Error('note not found')
+    err.status = 404
+    throw err
   }
 
-  res.json({ message : 'note deleted' })
-}
+  success(res, { message : 'note deleted' })
+})
 
 
 module.exports = {

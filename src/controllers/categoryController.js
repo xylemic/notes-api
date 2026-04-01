@@ -1,19 +1,28 @@
 const categoryService = require('../services/categoryService')
+const asyncHandler = require('../middleware/asyncHandler')
+const { success } = require('../utils/response')
 
-const getCategories = async (req, res) => {
+const getCategories = asyncHandler(async (req, res) => {
   const categories = await categoryService.getCategories(req.user.id)
-  res.json(categories)
-}
+  
+  success(res, categories)
+})
 
 
-const createCategory = async (req, res) => {
+const createCategory = asyncHandler(async (req, res) => {
+  if (!req.body.name) {
+    const err = new Error('category name is required')
+    err.status = 400
+    throw err
+  }
+
   const category = await categoryService.createCategory(
     req.body.name,
     req.user.id
   )
 
-  res.status(201).json(category)
-}
+  success(res, category, 201)
+})
 
 
 module.exports = {

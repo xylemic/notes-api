@@ -1,43 +1,53 @@
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
+const asyncHandler = require('../middleware/asyncHandler')
+const { success } = require('../utils/response')
 const userService = require('../services/userService')
 
-const register = async (req, res) => {
+const register = asyncHandler(async (req, res) => {
   const { email, password } = req.body
 
   const existingUser = await userService.getUserByEmail(email)
+
+
   if (existingUser) {
-    return res.status(400).json({ error : 'user already exists' })
+    const err = new Error('user already exists')
+    err.status = 400
+    throw err
   }
 
   const hashedPassword = await bcrypt.hash(password, 10)
 
   const user = await userService.createUser(email, hashedPassword)
 
-  res.status(201).json({ id : user.id, email : user.email })
-}
+  success(res, { id : user.id, email : user.email }, 201)
+})
 
-const login = async (req, res) => {
+const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body
 
   const user = await userService.getUserByEmail(email)
   if (!user) {
-    return res.status(400).json({ error : 'invalid credentials' })
+    const err = new Error('invalid credentials')
+    err.status = 400
+    throw err
   }
 
   const isMatch = await bcrypt.compare(password, user.password)
   if (!isMatch) {
-    return res.status(400).json({ error : 'invalid credentials' })
+    const err = new Error('invalid credentials')
+    err.status = 400
+    throw err
   }
 
   const token = jwt.sign(
-    { id : user.id },
+    { id: user.id },
     process.env.JWT_SECRET,
-    { expiresIn : '1h' }
+    { expiresIn: '1h' }
   )
 
-  res.json({ token })
-}
+  success(res, { token })
+})
 
 module.exports = {
   register,
